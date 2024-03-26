@@ -6,7 +6,6 @@ from dialog import Dialog
 from logger import logger
 from opencc import OpenCC
 from dotenv import load_dotenv
-from fastapi import FastAPI
 from chatgpt import ChatGPTCustom
 from json import JSONDecodeError
 
@@ -34,7 +33,8 @@ class TinderBot(object) :
             else:
                 chatroom.send(response, from_user_id, to_user_id)
             logger.info(f'Content: {content}, Reply: {response}')
-
+    def get_matches(self):
+        pass
     def reply_messages(self):
         try :
             profile = self.tinder_api.profile()
