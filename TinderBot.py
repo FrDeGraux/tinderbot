@@ -65,7 +65,8 @@ class TinderBot(object) :
                     #self.send_response(chatroom, response, content, from_user_id, to_user_id)
 
             else:
-                content = self.dialog.generate_initialize_input(user_id, match.match_id, match)
-                response = self.chatgpt.ask_to_gpt(content)
+                pass
+               # content = self.dialog.generate_initialize_input(user_id, match.match_id, match)
+               # response = self.chatgpt.ask_to_gpt(content)
                 #Telegram
-                self.send_response(chatroom, response, content, user_id, match.match_id)
+              #  self.send_response(chatroom, response, content, user_id, match.match_id)

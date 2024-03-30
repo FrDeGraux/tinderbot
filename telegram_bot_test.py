@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler,CallbackContext
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 load_dotenv('.env')
 
 class TelegramBot:
@@ -13,18 +13,13 @@ class TelegramBot:
         self.updater = Updater(os.getenv('TELEGRAM_TOKEN'))
         dp = self.updater.dispatcher
         dp.add_handler(CommandHandler('start', self.start))
-        dp.add_handler(CommandHandler('custommessage', self.custom_message))
         dp.add_handler(CallbackQueryHandler(self.button))
 
-    def custom_message(self,update, callback,msg ) -> None:
-        keyboard = [[InlineKeyboardButton(text="Show Options", callback_data="show_options")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        update.message.reply_text(
-            msg + ' lick below to see the options:',
-            reply_markup=reply_markup)
+    def start(self, update: Update, context: CallbackContext) -> None:
+        keyboard = self.get_menu(0)
+        update.message.reply_text('Choose an option:', reply_markup=keyboard)
 
     def get_menu(self, page: int) -> InlineKeyboardMarkup:
-        '''get_menu: This method generates an inline keyboard markup for pagination. It creates buttons for the current set of items and, if necessary, navigation buttons for previous and next pages.'''
         start_idx = page * self.ITEMS_PER_PAGE
         end_idx = start_idx + self.ITEMS_PER_PAGE
         current_items = self.items[start_idx:end_idx]
@@ -33,7 +28,6 @@ class TelegramBot:
             [InlineKeyboardButton(text=item, callback_data=item)] for item in current_items
         ]
 
-        # Navigation buttons
         if start_idx > 0:
             buttons.append([InlineKeyboardButton(text="<< Prev", callback_data=f"prev_{page}")])
         if end_idx < len(self.items):
@@ -41,20 +35,13 @@ class TelegramBot:
 
         return InlineKeyboardMarkup(buttons)
 
-    def start(self,update: Update, context: CallbackContext) -> None:
-        keyboard = self.get_menu(0)
-
-        update.message.reply_text('Choose an option:', reply_markup=keyboard)
-
-    def button(self, update, callback) -> None:
+    def button(self, update, context) -> None:
         query = update.callback_query
         query.answer()
 
         data = query.data
-        if data == "show_options":
-            keyboard = self.get_menu(0)
-            query.edit_message_text(text="Choose an option:", reply_markup=keyboard)
-        elif data.startswith("next_"):
+
+        if data.startswith("next_"):
             _, page = data.split("_")
             keyboard = self.get_menu(int(page) + 1)
             query.edit_message_text(text="Choose an option:", reply_markup=keyboard)
@@ -62,26 +49,40 @@ class TelegramBot:
             _, page = data.split("_")
             keyboard = self.get_menu(int(page) - 1)
             query.edit_message_text(text="Choose an option:", reply_markup=keyboard)
-        elif data.startswith("Option"):  # This is a new block to handle selected options
+        elif data.startswith("Option"):
             self.handle_option_selection(query, data)
+        elif data.startswith("sub_next_") or data.startswith("sub_prev_"):
+            self.handle_secondary_navigation(query, data)
         else:
-            # Process other callback data
             query.edit_message_text(text=f"You selected {data}")
 
-    def handle_option_selection(self, query, data) -> None:
-        # Assuming `data` is something like "Option 1", extract the option number
+    def handle_option_selection(self, query, data):
         option_number = data.split(" ")[-1]
-        # Generate a new set of buttons based on the selected option
-        keyboard = self.get_secondary_menu(option_number)
+        keyboard = self.get_secondary_menu(option_number, 0)
         query.edit_message_text(text=f"You selected {data}. Now choose a sub-option:", reply_markup=keyboard)
 
-    def get_secondary_menu(self, option_number: str) -> InlineKeyboardMarkup:
-        # Generate a secondary menu based on the option number. This is just an example.
-        sub_options = [f"Sub-option {option_number}.{i}" for i in range(1, 4)]  # Create 3 sub-options
+    def get_secondary_menu(self, option_number: str, page: int, total_sub_options: int = 10) -> InlineKeyboardMarkup:
+        start_idx = page * self.ITEMS_PER_PAGE
+        end_idx = min(start_idx + self.ITEMS_PER_PAGE, total_sub_options)
+
+        sub_options = [f"Sub-option {option_number}.{i}" for i in range(start_idx + 1, end_idx + 1)]
+
         buttons = [
             [InlineKeyboardButton(text=sub_option, callback_data=sub_option)] for sub_option in sub_options
         ]
+
+        if start_idx > 0:
+            buttons.append([InlineKeyboardButton(text="<< Prev", callback_data=f"sub_prev_{option_number}_{page}")])
+        if end_idx < total_sub_options:
+            buttons.append([InlineKeyboardButton(text="Next >>", callback_data=f"sub_next_{option_number}_{page}")])
+
         return InlineKeyboardMarkup(buttons)
+
+    def handle_secondary_navigation(self, query, data):
+        _, direction, option_number, page = data.split("_")
+        new_page = int(page) + 1 if direction == "next" else int(page) - 1
+        keyboard = self.get_secondary_menu(option_number, new_page)
+        query.edit_message_text(text=f"Option {option_number}. Choose a sub-option:", reply_markup=keyboard)
 
     def run(self):
         self.updater.start_polling()
