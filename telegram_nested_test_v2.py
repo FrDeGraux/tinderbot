@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 
 load_dotenv('.env')
 
@@ -16,6 +16,7 @@ class TelegramBot:
         dp = self.updater.dispatcher
         dp.add_handler(CommandHandler('start', self.start))
         dp.add_handler(CallbackQueryHandler(self.button))
+        dp.add_handler(MessageHandler(Filters.text & ~Filters.command, self.handle_custom_text))
 
     def start(self, update: Update, context: CallbackContext) -> None:
         keyboard = self.get_menu(level=1, page=0)
@@ -35,6 +36,7 @@ class TelegramBot:
         buttons = [
             [InlineKeyboardButton(text=item, callback_data=f"{level}_{item}_{page}")] for item in items
         ]
+        buttons.append([InlineKeyboardButton(text="Send Your Text", callback_data=f"{level}_custom_{page}")])
 
         # Navigation buttons
         navigation_buttons = []
@@ -46,19 +48,38 @@ class TelegramBot:
 
         return InlineKeyboardMarkup(buttons)
 
+    def handle_custom_text(self, update: Update, context: CallbackContext) -> None:
+        text = update.message.text
+        update.message.reply_text(f"Received your text: {text}")
+
+        # Define the buttons
+        yes_button = InlineKeyboardButton(text="Yes", callback_data="0_yes")
+        no_button = InlineKeyboardButton(text="No", callback_data="0_no")
+        keyboard = InlineKeyboardMarkup([[yes_button, no_button]])
+
+        # Send the buttons as a reply
+        update.message.reply_text('Do you want to proceed?', reply_markup=keyboard)
+
     def button(self, update, context) -> None:
         query = update.callback_query
         query.answer()
 
         data = query.data.split("_")
-        level = int(data[0])
         action = data[1]
 
-        if action in ["next", "prev"]:
+        if action == 'yes':
+            query.edit_message_text(text="Message Sent!")
+            return
+        elif action == 'custom':
+            query.edit_message_text(text="Please send your custom text now.")
+            return
+        elif action in ["next", "prev"]:
+            level = int(data[0])
             page = int(data[2])
             keyboard = self.get_menu(level, page)
             query.edit_message_text(text=f"Level {level} - Choose an option:", reply_markup=keyboard)
         else:
+            level = int(data[0])
             item = data[1]
             page = int(data[2])
             if level < self.MAX_LEVELS:
