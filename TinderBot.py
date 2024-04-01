@@ -17,7 +17,7 @@ class TinderBot(object) :
         self.dialog = Dialog()
         self.chatgpt = ChatGPTCustom()
         self.tinder_api = TinderAPI(os.getenv('TINDER_TOKEN'))
-
+      #  self.reply_messages()
         pass
     def get_languages(self,in_match):
         sBio = in_match.person.bio
@@ -33,8 +33,19 @@ class TinderBot(object) :
             else:
                 chatroom.send(response, from_user_id, to_user_id)
             logger.info(f'Content: {content}, Reply: {response}')
-    def get_matches(self):
-        pass
+    def get_matches_names(self):
+        matches = self.tinder_api.matches(limit=10)
+        names = [{'name': item.person.name, 'id' : item.match_id} for item in matches]
+        return names
+
+    def process_messages(self,match_id):
+        chatroom = self.tinder_api.get_messages(match_id)
+
+        result_text = ''
+        for message in chatroom.messages:
+            prefix = "Me: " if message.from_id == os.getenv('MY_TINDER_ID')  else "Her: "
+            result_text += prefix + message.message+ '\n'
+        return result_text.strip()  # Remove the last newline character
     def reply_messages(self):
         try :
             profile = self.tinder_api.profile()
@@ -43,6 +54,10 @@ class TinderBot(object) :
         user_id = profile.id
 
         for match in self.tinder_api.matches(limit=50):
+            chatroom = self.tinder_api.get_messages(match.match_id)
+            lastest_message = chatroom.get_lastest_message()
+            pass
+            """
             if (match.language is None):
                 match.language = self.get_languages(match)
             chatroom = self.tinder_api.get_messages(match.match_id)
@@ -70,3 +85,4 @@ class TinderBot(object) :
                # response = self.chatgpt.ask_to_gpt(content)
                 #Telegram
               #  self.send_response(chatroom, response, content, user_id, match.match_id)
+              """
