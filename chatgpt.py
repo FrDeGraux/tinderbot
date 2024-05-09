@@ -19,7 +19,6 @@ class ChatGPTCustom :
 
         return self.invoke_chatgpt(message_history)
     def invoke_chatgpt(self,message_history):
-
         headers = {
             "Authorization": f"Bearer {API_KEY}",
             "Content-Type": "application/json"
@@ -42,7 +41,7 @@ class ChatGPTCustom :
         # Query ChatGPT
 
         ai_response = [self.invoke_chatgpt(self.message_history) for idx in range((n_alternatives))]
-
+        ai_response  = [item[:150] for item in ai_response]
         # Output response to a file and open it with the default text editor
 
         # Add ChatGPT response to list of messages

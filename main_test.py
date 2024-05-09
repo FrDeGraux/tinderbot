@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 
 # Define API key and endpoint
-API_KEY = "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"
+API_KEY = "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"
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 
 # System message

@@ -4,8 +4,8 @@ from TinderBot import TinderBot
 
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
-
-load_dotenv('.env')
+env_path = '/home/frank/Documents/Tokens/.env'
+load_dotenv(dotenv_path=env_path)
 odd_numbers = [num for num in range(3, 51, 2)]
 even_numbers = [num for num in range(2, 51, 2)]
 
@@ -26,6 +26,7 @@ class TelegramBot:
         self.selected_match_id = ""
         self.text = ""
         self.gpt_replies = []
+        self.gpt_message = []
         self.level = None
         self.page = None
 
@@ -34,10 +35,15 @@ class TelegramBot:
         update.message.reply_text('Choose an option:', reply_markup=keyboard)
 
     def get_menu(self, level, page):
+        if(self.level != level) :
+            self.gpt_message = []
         self.level = level
         self.page = page
         start_idx = page * self.ITEMS_PER_PAGE
         end_idx = start_idx + self.ITEMS_PER_PAGE
+
+        if (self.level ) in even_numbers:
+            end_idx = min(end_idx,len(self.gpt_replies)-1)
 
         if self.level == 1:
 
@@ -49,18 +55,17 @@ class TelegramBot:
             has_new_messages = [self.tbot.has_new_message(match) for match in matches_id]
             matches = self.matches[start_idx:end_idx]
 
-            buttons = [
-                [InlineKeyboardButton(text=item, callback_data=f"{self.level}_{item}_{self.page}_{id}")] for item, id in
-                zip(items, ids)
-            ]
+            buttons = [[InlineKeyboardButton(text=item, callback_data=f"{self.level}_{index}_{self.page}_{id}")] for index,(item, id) in enumerate(zip(items, ids))]
+
         else :
             if self.level in self.even_numbers:
                 items_shown = [self.gpt_replies[i] for i in range(start_idx + 1, end_idx + 1)]
+                self.gpt_message = self.gpt_message+items_shown
             if self.level in self.odd_numbers:
                 items_shown = [f"Cocky{i}" for i in range(start_idx + 1, end_idx + 1)]
 
             buttons = [
-                [InlineKeyboardButton(text=item, callback_data=f"{self.level}_{item}_{self.page}")] for item in items_shown
+                [InlineKeyboardButton(text=item, callback_data=f"{self.level}_{index}_{self.page}")] for index,item in enumerate(items_shown)
             ]
 
         buttons.append([InlineKeyboardButton(text="Send Your Text", callback_data=f"{self.level}_custom_{self.page}")])
@@ -79,17 +84,23 @@ class TelegramBot:
             if match.match_id == in_sMatchID:
                 return match
         return None  # Return None if match_id is not found in the list
+    def get_match_name(self,in_sMatchID):
+        item = [item for item in self.matches if item.match_id == in_sMatchID]
+        return item.person.name
     def handle_custom_text(self, update: Update, context: CallbackContext) -> None:
         self.custom_text = update.message.text
         update.message.reply_text(f"Received your text: {self.custom_text}")
 
         # Define the buttons
-        yes_button = InlineKeyboardButton(text="Yes", callback_data="0_yes")
-        no_button = InlineKeyboardButton(text="No", callback_data="0_no")
+        yes_button = InlineKeyboardButton(text="Yes", callback_data="0_yes_custom")
+        no_button = InlineKeyboardButton(text="No", callback_data="0_no_custom")
         keyboard = InlineKeyboardMarkup([[yes_button, no_button]])
 
         # Send the buttons as a reply
         update.message.reply_text('Do you want to proceed?', reply_markup=keyboard)
+    def run(self):
+        self.updater.start_polling()
+        self.updater.idle()
     def button(self, update, context) -> None:
         query = update.callback_query
         query.answer()
@@ -105,7 +116,9 @@ class TelegramBot:
             query.edit_message_text(text="Message Sent!")
             return
         if action == 'custom':
-            query.edit_message_text(text="Please send your custom text now.")
+            item = data[1]
+
+            query.edit_message_text(text=item)
             return
         else :
             if action != "no" :
@@ -114,28 +127,37 @@ class TelegramBot:
             if action in ["next", "prev"]:
 
                 keyboard = self.get_menu(self.level, self.page)
-                query.edit_message_text(text=f"Level {self.level} - Choose an option:", reply_markup=keyboard)
+                query.edit_message_text(text=f"Level {self.level} - Choose an option:")
             else:
                 item = data[1]
+                if 'custom' in data :
+                    self.level = self.level-1
                 if self.level < self.MAX_LEVELS:
                     if (self.level+1)  in even_numbers :
-                        self.gpt_replies = self.tbot.reply_messages_v2(self.from_match_id_to_match_object(self.selected_match_id))
+                        msg_enhancement = None
+                        if self.level != 1 :
+                            msg_enhancement = data[1]
+                        self.gpt_replies = self.tbot.reply_messages_v2(self.from_match_id_to_match_object(self.selected_match_id),msg_enhancement)
 
                     keyboard = self.get_menu(self.level + 1, 0)  # Move to the next level
                     self.text = self.tbot.process_messages(self.selected_match_id)
                     text_parts = [self.text[i:i + 4000] for i in
                                   range(0, len(self.text), 4000)]  # Splitting into parts of 4000 characters each
-                  #     text_parts = text_parts.reverse()
+
+                    #     text_parts = text_parts.reverse()
                     # Sending each part as a separate message
                     for part in text_parts:
-                        query.edit_message_text(text=part, reply_markup=keyboard)
+                        query.message.reply_text(text=part)
+                    for idx,part in enumerate(self.gpt_message):
+
+                        if idx == len(self.gpt_message) - 1:
+                            query.message.reply_text(text="Option " + str(idx+1) + " : " + part, reply_markup=keyboard)
+                        else :
+                            query.message.reply_text(text="Option " + str(idx + 1) + " : " + part)
+
 
                 else:
                     query.edit_message_text(text=f"You reached the final selection: {item}")
-
-    def run(self):
-        self.updater.start_polling()
-        self.updater.idle()
 
 
 if __name__ == '__main__':

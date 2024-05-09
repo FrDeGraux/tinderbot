@@ -95,8 +95,8 @@ class TinderBot(object) :
                 #Telegram
               #  self.send_response(chatroom, response, content, user_id, match.match_id)
 
-    def reply_messages_v2(self,match):
-
+    def reply_messages_v2(self,match,msg_enhancement):
+    # GENERATE REPLY TO SPECIFIC MATCH
             if (match.language is None):
                 match.language = self.get_languages(match)
             chatroom = self.tinder_api.get_messages(match.match_id)
@@ -112,9 +112,9 @@ class TinderBot(object) :
                     last_message = 'other'
                 sent_date = lastest_message.sent_date
                 if last_message == 'me' or ((sent_date + datetime.timedelta(days=1)) < datetime.datetime.now()): # Relance après un jour
-                    content = self.dialog.generate_typic_input(from_user_id, to_user_id, chatroom.messages[::-1])
-                    list_responses = [str(i) for i in range(1,10)]
-                   # list_responses = self.chatgpt.ask_to_gpt(content,int(os.getenv('N_ALTERNATIVES')))
+                    content = self.dialog.generate_typic_input(from_user_id, to_user_id, chatroom.messages[::-1]) # CHATGPT CONTENT
+                    list_responses = [str(i) for i in range(1,int(os.getenv('N_ALTERNATIVES'))+1)]
+                    list_responses = self.chatgpt.ask_to_gpt(content,int(os.getenv('N_ALTERNATIVES')))
                     return list_responses
                     # Telegram
                     #self.send_response(chatroom, response, content, from_user_id, to_user_id)
