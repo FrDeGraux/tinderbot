@@ -1,7 +1,7 @@
 
 class Dialog:
     PREFIX_TYPICAL = """
-        You are now playing the role of [Sender] and your task is to respond to [Receiver] in the Tinder conversation below. Your response should not exceed 200 words and end with a question. Please respond in the language used by [Sender].
+        You are now playing the role of [Sender] and your task is to respond to [Receiver] in the Tinder conversation below. Your response should be about 2000 words and end with a question. Please respond in the language used by [Sender].
     """
     PREFIX_INITIALIZE = """
         Make a Tinder opener in maximum three sentences in the language based on this bio : 

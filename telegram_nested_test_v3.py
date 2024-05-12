@@ -1,13 +1,14 @@
 import os
 from dotenv import load_dotenv
 from TinderBot import TinderBot
-
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
-env_path = '/home/frank/Documents/Tokens/.env'
-load_dotenv(dotenv_path=env_path)
+
 odd_numbers = [num for num in range(3, 51, 2)]
 even_numbers = [num for num in range(2, 51, 2)]
+
+env_path = '/home/frank/Documents/Tokens/.env'
+load_dotenv(dotenv_path=env_path)
 
 class TelegramBot:
     ITEMS_PER_PAGE = 5
@@ -32,7 +33,7 @@ class TelegramBot:
 
     def start(self, update: Update, context: CallbackContext) -> None:
         keyboard = self.get_menu(level=1, page=0)
-        update.message.reply_text('Choose an option:', reply_markup=keyboard)
+        update.message.reply_text( text = "choose", reply_markup=keyboard)
 
     def get_menu(self, level, page):
         if(self.level != level) :
@@ -61,6 +62,7 @@ class TelegramBot:
             if self.level in self.even_numbers:
                 items_shown = [self.gpt_replies[i] for i in range(start_idx + 1, end_idx + 1)]
                 self.gpt_message = self.gpt_message+items_shown
+                pass
             if self.level in self.odd_numbers:
                 items_shown = [f"Cocky{i}" for i in range(start_idx + 1, end_idx + 1)]
 
@@ -127,7 +129,17 @@ class TelegramBot:
             if action in ["next", "prev"]:
 
                 keyboard = self.get_menu(self.level, self.page)
-                query.edit_message_text(text=f"Level {self.level} - Choose an option:")
+                start_idx = self.page * self.ITEMS_PER_PAGE
+                end_idx = min(start_idx + self.ITEMS_PER_PAGE,len(self.gpt_message))
+
+                for idx, part in enumerate(self.gpt_message[start_idx-1 : end_idx-1]):
+
+                    if idx == ((end_idx-start_idx)- 1):
+                        query.message.reply_text(text=part, reply_markup=keyboard)
+                    else:
+                        query.message.reply_text(text=part)
+
+
             else:
                 item = data[1]
                 if 'custom' in data :
@@ -143,21 +155,32 @@ class TelegramBot:
                     self.text = self.tbot.process_messages(self.selected_match_id)
                     text_parts = [self.text[i:i + 4000] for i in
                                   range(0, len(self.text), 4000)]  # Splitting into parts of 4000 characters each
+                    '''
+                    for part in text_parts:
+                        query.edit_message_text(text=part, reply_markup=keyboard)
+
+                else:
+                    query.edit_message_text(text=f"You reached the final selection: {item}")
 
                     #     text_parts = text_parts.reverse()
+                    '''
                     # Sending each part as a separate message
+
                     for part in text_parts:
                         query.message.reply_text(text=part)
-                    for idx,part in enumerate(self.gpt_message):
+                    dv = min(self.ITEMS_PER_PAGE-1, len(self.gpt_message))
+                    pass
+                    for idx,part in enumerate(self.gpt_message[:min(self.ITEMS_PER_PAGE, len(self.gpt_message))]) :
 
-                        if idx == len(self.gpt_message) - 1:
-                            query.message.reply_text(text="Option " + str(idx+1) + " : " + part, reply_markup=keyboard)
+                        if idx == min((self.ITEMS_PER_PAGE-1,len(self.gpt_message)-1)):
+                            query.message.reply_text(text= part, reply_markup=keyboard)
                         else :
-                            query.message.reply_text(text="Option " + str(idx + 1) + " : " + part)
+                            query.message.reply_text(text= part)
 
 
                 else:
                     query.edit_message_text(text=f"You reached the final selection: {item}")
+
 
 
 if __name__ == '__main__':

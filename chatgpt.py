@@ -1,11 +1,15 @@
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 import os
 from dotenv import load_dotenv
+
+env_path = '/home/frank/Documents/Tokens/.env'
+load_dotenv(dotenv_path=env_path)
+
 import requests
+env_path = '/home/frank/Documents/Tokens/.env'
 
 # System message
 AI_SYSTEM_MESSAGE = "You are a helpful assistant"
-load_dotenv('.env')
 
 # Initialize message history with system message
 API_KEY =os.getenv('OPENAPI_KEY')
@@ -39,9 +43,9 @@ class ChatGPTCustom :
         self.message_history.append({"role": "user", "content": question})
 
         # Query ChatGPT
+        ai_response = ["Option " + str(idx) for idx in range((n_alternatives))]
 
-        ai_response = [self.invoke_chatgpt(self.message_history) for idx in range((n_alternatives))]
-        ai_response  = [item[:150] for item in ai_response]
+       # ai_response = [self.invoke_chatgpt(self.message_history) for idx in range((n_alternatives))]
         # Output response to a file and open it with the default text editor
 
         # Add ChatGPT response to list of messages
