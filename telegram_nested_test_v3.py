@@ -132,9 +132,10 @@ class TelegramBot:
                 start_idx = self.page * self.ITEMS_PER_PAGE
                 end_idx = min(start_idx + self.ITEMS_PER_PAGE,len(self.gpt_message))
 
-                for idx, part in enumerate(self.gpt_message[start_idx-1 : end_idx-1]):
-
-                    if idx == ((end_idx-start_idx)- 1):
+                for idx, part in enumerate(self.gpt_message[start_idx: end_idx]):
+                    dv = len(self.gpt_message[start_idx: end_idx-1])
+                    pass
+                    if idx == len(self.gpt_message[start_idx: end_idx-1]):
                         query.message.reply_text(text=part, reply_markup=keyboard)
                     else:
                         query.message.reply_text(text=part)
