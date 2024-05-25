@@ -1,7 +1,7 @@
 
 class Dialog:
     PREFIX_TYPICAL = """
-        You are now playing the role of [Sender] and your task is to respond to [Receiver] in the Tinder conversation below. Your response should be about 2000 words and end with a question. Please respond in the language used by [Sender].
+        You are now playing the role of [Sender] and your task is to respond to [Receiver] in the Tinder conversation below. Your response should be about 200 words and end with a question. Please respond in the language used by [Sender].
     """
     PREFIX_INITIALIZE = """
         Make a Tinder opener in maximum three sentences in the language based on this bio : 
@@ -14,6 +14,10 @@ class Dialog:
 
     PREFIX_FINAL_SECOND = " Respond the the Tinder conversation below: . Suggest also the bar : Cafe Brazil to take her out. Tell her it is very good for intimacy so we can know each better"
     PREFIX_FINA_THIRD = " Answer to this conversation by suggesting moving out to some messenger ; give my phone number : 0468276470 "
+    PREFIX_ENHANCEMENT = "Can you make the following message "
+
+    LIST_ENHANCEMENTS = ["More Cocky","More Funny","More Polite","More Classy","More Cheesy","More Erotical","More Girly"]
+
     def generate_typic_input(self, from_user_id, to_user_id, dialog):
         dialog = dialog[-20:]
 

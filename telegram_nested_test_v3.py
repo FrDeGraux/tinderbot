@@ -3,18 +3,18 @@ from dotenv import load_dotenv
 from TinderBot import TinderBot
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
-
+from dialog import Dialog
 odd_numbers = [num for num in range(3, 51, 2)]
 even_numbers = [num for num in range(2, 51, 2)]
 
 env_path = '/home/frank/Documents/Tokens/.env'
 load_dotenv(dotenv_path=env_path)
-
+pass
 class TelegramBot:
     ITEMS_PER_PAGE = 5
-    MAX_LEVELS = 5  # Maximum depth of the menu
-    odd_numbers = [num for num in range(3, MAX_LEVELS, 2)]
-    even_numbers = [num for num in range(2, MAX_LEVELS, 2)]
+    MAX_LEVELS = 15  # Maximum depth of the menu
+    odd_numbers = [num for num in range(3, 51, 2)]
+    even_numbers = [num for num in range(2, 51, 2)]
     def __init__(self):
         self.updater = Updater(os.getenv('TELEGRAM_TOKEN'))
         dp = self.updater.dispatcher
@@ -26,6 +26,7 @@ class TelegramBot:
         self.custom_text = None
         self.selected_match_id = ""
         self.text = ""
+        self.current_message = ""
         self.gpt_replies = []
         self.gpt_message = []
         self.level = None
@@ -42,9 +43,11 @@ class TelegramBot:
         self.page = page
         start_idx = page * self.ITEMS_PER_PAGE
         end_idx = start_idx + self.ITEMS_PER_PAGE
+        end_idx = min(end_idx, len(self.gpt_replies) - 1)
 
-        if (self.level ) in even_numbers:
-            end_idx = min(end_idx,len(self.gpt_replies)-1)
+
+    #    if (page) > 0 :
+     #       end_idx = min(end_idx,len(self.gpt_replies)-1)
 
         if self.level == 1:
 
@@ -59,12 +62,10 @@ class TelegramBot:
             buttons = [[InlineKeyboardButton(text=item, callback_data=f"{self.level}_{index}_{self.page}_{id}")] for index,(item, id) in enumerate(zip(items, ids))]
 
         else :
-            if self.level in self.even_numbers:
-                items_shown = [self.gpt_replies[i] for i in range(start_idx + 1, end_idx + 1)]
-                self.gpt_message = self.gpt_message+items_shown
-                pass
-            if self.level in self.odd_numbers:
-                items_shown = [f"Cocky{i}" for i in range(start_idx + 1, end_idx + 1)]
+            items_shown = [self.gpt_replies[i] for i in range(start_idx + 1, end_idx + 1)]
+            self.gpt_message = self.gpt_message+items_shown
+            pass
+
 
             buttons = [
                 [InlineKeyboardButton(text=item, callback_data=f"{self.level}_{index}_{self.page}")] for index,item in enumerate(items_shown)
@@ -76,7 +77,8 @@ class TelegramBot:
         navigation_buttons = []
         if start_idx > 0:
             navigation_buttons.append(InlineKeyboardButton(text="<< Prev", callback_data=f"{self.level}_prev_{self.page - 1}"))
-        navigation_buttons.append(InlineKeyboardButton(text="Next >>", callback_data=f"{self.level}_next_{self.page + 1}"))
+        if end_idx < (len(self.gpt_replies) - 1):
+            navigation_buttons.append(InlineKeyboardButton(text="Next >>", callback_data=f"{self.level}_next_{self.page + 1}"))
         if navigation_buttons:
             buttons.append(navigation_buttons)
 
@@ -118,9 +120,7 @@ class TelegramBot:
             query.edit_message_text(text="Message Sent!")
             return
         if action == 'custom':
-            item = data[1]
-
-            query.edit_message_text(text=item)
+            query.edit_message_text(text="Please send your custom text now.")
             return
         else :
             if action != "no" :
@@ -145,15 +145,31 @@ class TelegramBot:
                 item = data[1]
                 if 'custom' in data :
                     self.level = self.level-1
+
                 if self.level < self.MAX_LEVELS:
-                    if (self.level+1)  in even_numbers :
-                        msg_enhancement = None
-                        if self.level != 1 :
-                            msg_enhancement = data[1]
-                        self.gpt_replies = self.tbot.reply_messages_v2(self.from_match_id_to_match_object(self.selected_match_id),msg_enhancement)
+                    # click on the text button
+                    click_number = data[1]  # i.e more cocky
+                    idx_clicked = self.page * self.ITEMS_PER_PAGE + int(click_number)
+                    msg_enhancement = None
+                    if self.level != 1 :
+                        if (self.level + 1) in even_numbers:
+                            msg_enhancement = self.gpt_message[int(click_number)]
+                        else :
+                            self.current_message = self.gpt_message[int(click_number)]
+                    if ((self.level) in odd_numbers) or (self.level == 1 ):
+                        if(self.level == 1) :
+                            self.gpt_replies = self.tbot.chatgpt.invokegpt_first()
+
+                        else :
+                            self.gpt_replies = self.tbot.reply_messages_v2(self.from_match_id_to_match_object(self.selected_match_id),self.current_message,msg_enhancement)
+                    else :
+                        self.gpt_replies = self.tbot.generate_enhancements()
 
                     keyboard = self.get_menu(self.level + 1, 0)  # Move to the next level
-                    self.text = self.tbot.process_messages(self.selected_match_id)
+                    if (self.level == 1) :
+                        self.text = self.tbot.process_messages(self.selected_match_id)
+                    else :
+                        self.text = self.current_message
                     text_parts = [self.text[i:i + 4000] for i in
                                   range(0, len(self.text), 4000)]  # Splitting into parts of 4000 characters each
                     '''
@@ -171,12 +187,15 @@ class TelegramBot:
                         query.message.reply_text(text=part)
                     dv = min(self.ITEMS_PER_PAGE-1, len(self.gpt_message))
                     pass
-                    for idx,part in enumerate(self.gpt_message[:min(self.ITEMS_PER_PAGE, len(self.gpt_message))]) :
+                    if self.level in odd_numbers :
+                        query.message.reply_text(text="A", reply_markup=keyboard)
+                    else :
+                        for idx,part in enumerate(self.gpt_message[:min(self.ITEMS_PER_PAGE, len(self.gpt_message))]) :
 
-                        if idx == min((self.ITEMS_PER_PAGE-1,len(self.gpt_message)-1)):
-                            query.message.reply_text(text= part, reply_markup=keyboard)
-                        else :
-                            query.message.reply_text(text= part)
+                            if idx == min((self.ITEMS_PER_PAGE-1,len(self.gpt_message)-1)):
+                                query.message.reply_text(text= part, reply_markup=keyboard)
+                            else :
+                                query.message.reply_text(text= part)
 
 
                 else:

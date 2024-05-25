@@ -17,7 +17,10 @@ class TinderBot(object) :
         self.dialog = Dialog()
         self.chatgpt = ChatGPTCustom()
         self.tinder_api = TinderAPI(os.getenv('TINDER_TOKEN'))
-        self.profile = self.tinder_api.profile()
+        try :
+            self.profile = self.tinder_api.profile()
+        except :
+            raise Exception("Unable to log in using the current API Key")
         self.user_id = self.profile.id
         pass
     def get_languages(self,in_match):
@@ -95,7 +98,9 @@ class TinderBot(object) :
                 #Telegram
               #  self.send_response(chatroom, response, content, user_id, match.match_id)
 
-    def reply_messages_v2(self,match,msg_enhancement):
+    def generate_enhancements(self):
+        return Dialog.LIST_ENHANCEMENTS
+    def reply_messages_v2(self,match,current_message,msg_enhancement = None):
     # GENERATE REPLY TO SPECIFIC MATCH
             if (match.language is None):
                 match.language = self.get_languages(match)
@@ -114,7 +119,10 @@ class TinderBot(object) :
                 if last_message == 'me' or ((sent_date + datetime.timedelta(days=1)) < datetime.datetime.now()): # Relance après un jour
                     content = self.dialog.generate_typic_input(from_user_id, to_user_id, chatroom.messages[::-1]) # CHATGPT CONTENT
                     list_responses = [str(i) for i in range(1,int(os.getenv('N_ALTERNATIVES'))+1)]
-                    list_responses = self.chatgpt.ask_to_gpt(content,int(os.getenv('N_ALTERNATIVES')))
+                    if current_message == "" :
+                        list_responses = self.chatgpt.ask_to_gpt(content,int(os.getenv('N_ALTERNATIVES')))
+                    else :
+                        list_responses = self.chatgpt.enrich_by_gpt(current_message,msg_enhancement,int(os.getenv('N_ALTERNATIVES')))
                     return list_responses
                     # Telegram
                     #self.send_response(chatroom, response, content, from_user_id, to_user_id)
