@@ -131,16 +131,16 @@ class TelegramBot:
                 keyboard = self.get_menu(self.level, self.page)
                 start_idx = self.page * self.ITEMS_PER_PAGE
                 end_idx = min(start_idx + self.ITEMS_PER_PAGE,len(self.gpt_message))
-
-                for idx, part in enumerate(self.gpt_message[start_idx: end_idx]):
-                    dv = len(self.gpt_message[start_idx: end_idx-1])
-                    pass
-                    if idx == len(self.gpt_message[start_idx: end_idx-1]):
-                        query.message.reply_text(text=part, reply_markup=keyboard)
-                    else:
-                        query.message.reply_text(text=part)
-
-
+                if self.level in odd_numbers:
+                    query.message.reply_text(text="A", reply_markup=keyboard)
+                else :
+                    for idx, part in enumerate(self.gpt_message[start_idx: end_idx]):
+                        dv = len(self.gpt_message[start_idx: end_idx-1])
+                        pass
+                        if idx == len(self.gpt_message[start_idx: end_idx-1]):
+                                query.message.reply_text(text=part, reply_markup=keyboard)
+                        else:
+                                query.message.reply_text(text=part)
             else:
                 item = data[1]
                 if 'custom' in data :
@@ -157,11 +157,15 @@ class TelegramBot:
                         else :
                             self.current_message = self.gpt_message[int(click_number)]
                     if ((self.level) in odd_numbers) or (self.level == 1 ):
+                        '''
                         if(self.level == 1) :
                             self.gpt_replies = self.tbot.chatgpt.invokegpt_first()
+                        elif (self.level == 3) :
+                            self.gpt_replies = self.tbot.chatgpt.invokegpt_second()
 
                         else :
-                            self.gpt_replies = self.tbot.reply_messages_v2(self.from_match_id_to_match_object(self.selected_match_id),self.current_message,msg_enhancement)
+                        '''
+                        self.gpt_replies = self.tbot.reply_messages_v2(self.from_match_id_to_match_object(self.selected_match_id),self.current_message,msg_enhancement)
                     else :
                         self.gpt_replies = self.tbot.generate_enhancements()
 

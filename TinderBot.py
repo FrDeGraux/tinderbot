@@ -25,7 +25,7 @@ class TinderBot(object) :
         pass
     def get_languages(self,in_match):
         sBio = in_match.person.bio
-        strRqst = "can you tell me in a single word the language of this text " + sBio + "If it is not speakable language, answer French"
+        strRqst = "can you tell cme in a single word the language of this text " + sBio + "If it is not speakable language, answer French"
         response = 'French'
      #   response = chatgpt.get_response(strRqst)
         return response.lower().replace('.', '')
