@@ -70,6 +70,9 @@ class TelegramBot:
             buttons = [
                 [InlineKeyboardButton(text=item, callback_data=f"{self.level}_{index}_{self.page}")] for index,item in enumerate(items_shown)
             ]
+        if (self.level in odd_numbers) :
+            buttons.append(
+                [InlineKeyboardButton(text="Send GPT Text", callback_data=f"{self.level}_sendgpt_{self.page}")])
 
         buttons.append([InlineKeyboardButton(text="Send Your Text", callback_data=f"{self.level}_custom_{self.page}")])
 
@@ -102,13 +105,16 @@ class TelegramBot:
 
         # Send the buttons as a reply
         update.message.reply_text('Do you want to proceed?', reply_markup=keyboard)
+
+
+
     def run(self):
         self.updater.start_polling()
         self.updater.idle()
     def button(self, update, context) -> None:
         query = update.callback_query
         query.answer()
-
+        msg_enhancement = None
         data = query.data.split("_")
         if len(data) == 4 :
             self.selected_match_id = data[3]
@@ -116,12 +122,19 @@ class TelegramBot:
 
 
         if action == 'yes':
-            self.tbot.send_response(self.custom_text,self.selected_match_id)
+            if (self.level) in odd_numbers : # I need to know if it is to be sent or use as Message_Enhancement
+                #gpt yes
+                msg_enhancement = " More X"
+                # custom yes
+            else :
+                self.tbot.send_response(self.custom_text,self.selected_match_id)
             query.edit_message_text(text="Message Sent!")
             return
         if action == 'custom':
             query.edit_message_text(text="Please send your custom text now.")
             return
+
+
         else :
             if action != "no" :
                 self.level = int(data[0])
@@ -150,22 +163,22 @@ class TelegramBot:
                     # click on the text button
                     click_number = data[1]  # i.e more cocky
                     idx_clicked = self.page * self.ITEMS_PER_PAGE + int(click_number)
-                    msg_enhancement = None
                     if self.level != 1 :
-                        if (self.level + 1) in even_numbers:
-                            msg_enhancement = self.gpt_message[int(click_number)]
+                        if ((self.level + 1) in even_numbers) :
+                            if msg_enhancement is None :
+                                msg_enhancement = self.gpt_message[int(click_number)]
+
+
                         else :
                             self.current_message = self.gpt_message[int(click_number)]
+
                     if ((self.level) in odd_numbers) or (self.level == 1 ):
-                        '''
                         if(self.level == 1) :
                             self.gpt_replies = self.tbot.chatgpt.invokegpt_first()
                         elif (self.level == 3) :
                             self.gpt_replies = self.tbot.chatgpt.invokegpt_second()
-
                         else :
-                        '''
-                        self.gpt_replies = self.tbot.reply_messages_v2(self.from_match_id_to_match_object(self.selected_match_id),self.current_message,msg_enhancement)
+                            self.gpt_replies = self.tbot.reply_messages_v2(self.from_match_id_to_match_object(self.selected_match_id),self.current_message,msg_enhancement)
                     else :
                         self.gpt_replies = self.tbot.generate_enhancements()
 
