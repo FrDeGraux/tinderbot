@@ -57,7 +57,13 @@ class TinderBot(object) :
             if (lastest_message.from_id == (in_match_id)) :
                 return True
         return False
-
+    def is_a_new_match(self,in_match_id):
+        chatroom = self.tinder_api.get_messages(in_match_id)
+        lastest_message = chatroom.get_lastest_message()
+        if lastest_message:
+            return False
+        else :
+            return True
     def reply_messages(self):
         try:
             profile = self.tinder_api.profile()
