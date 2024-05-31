@@ -22,6 +22,8 @@ class TelegramBot:
         dp.add_handler(CallbackQueryHandler(self.button))
         dp.add_handler(MessageHandler(Filters.text & ~Filters.command, self.handle_custom_text))
         self.tbot = TinderBot()
+        self.init()
+    def init(self):
         self.matches = self.tbot.get_matches()
         self.custom_text = None
         self.selected_match_id = ""
@@ -31,7 +33,6 @@ class TelegramBot:
         self.gpt_message = []
         self.level = None
         self.page = None
-
     def start(self, update: Update, context: CallbackContext) -> None:
         keyboard = self.get_menu(level=1, page=0)
         update.message.reply_text( text = "choose", reply_markup=keyboard)
@@ -125,9 +126,8 @@ class TelegramBot:
         self.updater.idle()
     def complete_action(self,query):
 
-            self.tbot.send_response(self.custom_text, self.selected_match_id)
+            #self.tbot.send_response(self.custom_text, self.selected_match_id)
             query.edit_message_text(text="Message Sent!")
-            return
 
     def invite_to_send_message(self,query):
         query.edit_message_text(text="Please send your custom text now.")
@@ -218,8 +218,9 @@ class TelegramBot:
             self.level = int(data[0])
             self.page = int(data[2])
 
-        if action == 'yes' and (self.level) in even_numbers:  # I confirm what's been done
+        if action == 'yes' and (self.level) in odd_numbers:  # I confirm what's been done
             self.complete_action(query)
+            self.init()
             return
         if (action == 'backlevel') :
             self.page = 0
@@ -243,5 +244,9 @@ class TelegramBot:
                 self.generate_above_text(query)
 
 if __name__ == '__main__':
-    bot = TelegramBot()
-    bot.run()
+    while True :
+        try :
+            bot = TelegramBot()
+            bot.run()
+        except :
+            pass
