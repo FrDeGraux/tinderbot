@@ -6,6 +6,7 @@ class Dialog:
     PREFIX_INITIALIZE = """
         Make a Tinder opener in maximum three sentences in the language based on this bio : 
     """
+
     PREFIX_PICKUP = """
         You are now playing the role of [Sender] and your task is to respond to [Receiver] in the Tinder conversation below. Your response should not exceed 50 words and end with a question. Please respond in the language used by [Sender].
     """
@@ -17,6 +18,15 @@ class Dialog:
     PREFIX_ENHANCEMENT = "Can you make the following message "
 
     LIST_ENHANCEMENTS = ["More Cocky","More Funny","More Polite","More Classy","More Cheesy","More Erotical","More Girly"]
+    LIST_OPENERS = ["Classic Opener",'Cube Opener','Profile Opener','A Opener','B Opener','C Opener']
+    PREFIX_OPENER = "Make an opener based on this profile "
+    openers_dict = {item: item for item in LIST_OPENERS}
+
+    # For correctly format the conversation
+
+
+
+
 
     def generate_typic_input(self, from_user_id, to_user_id, dialog):
         dialog = dialog[-20:]

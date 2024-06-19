@@ -22,6 +22,20 @@ class ChatGPTCustom :
     def invoke_chatgpt_sleep(self,message_history):
 
         return self.invoke_chatgpt(message_history)
+
+    def generate_from_opener(self,content):
+        #From this profile : XX _PROFILE
+        # Generate a Tinder opener
+        list_responses = self.chatgpt.ask_to_gpt(content, int(os.getenv('N_ALTERNATIVES')))
+        return list_responses
+
+    def invokegpt_intermediate(self):
+        res = [ "c1","c2","C3"]
+
+        return res
+    def invoke_openers(self):
+        res = ["Salut, j'ai remarqué ta bio et j'ai pensé à un jeu amusant. Imagine un cube dans ta tête. Quelle couleur est-il ? Quelle taille fait-il ? Où se trouve-t-il ? Chacune de ces réponses peut révéler quelque chose sur ta personnalité. Alors, quel est ton cube ?", "Salut, je vois que tu aimes les rencontres qui font la différence. Alors, jouons à un petit jeu pour briser la glace: le jeu du cube. Imagine un désert immense, au milieu duquel se trouve un cube. À toi de me dire à quoi ressemble le cube, quelle taille il a et de quelle matière il est fait. Cela m'aidera à en savoir un peu plus sur toi. Qu'en penses-tu ? 🙂", "Salut, j'ai remarqué ton bio et ça m'a fait penser à une petite expérience. Imaginons que tu te retrouves dans une pièce blanche, vide, avec un cube. Comment décrirais-tu ce cube? Sa taille, sa position, sa couleur...tout ce qui te vient à l'esprit. Ce n'est pas un piège, je suis juste curieux de connaître ta vision des choses. 🙂"]
+        return res
     def invokegpt_first(self):
 
           res = ["Je suis vraiment content que tu sois curieuse à propos de mon travail. C'est un domaine assez complexe et technique, mais j'aime beaucoup ce que je fais. C'est toujours intéressant de résoudre des problèmes et de trouver des solutions. Et toi, comment trouves-tu ton travail au SPF Ag Fisc ? Est-ce que c'est quelque chose que tu as toujours voulu faire ?Quant à mon histoire de célibataire, je dirais que je ne suis pas quelqu'un qui court après les relations. Je préfère prendre mon temps et laisser les choses se développer naturellement. Je crois que chaque relation est unique et qu'elle doit être nourrie avec soin et attention. Je suis sur Tinder depuis peu, j'essaie de voir si je peux faire de belles rencontres ici. Et toi, qu'est-ce qui t'a poussé à te joindre à l'application ? Et oui, tu as raison de dire que j'apprécie l'humour, l'intelligence et la communication chez une femme. J'ajouterais également l'honnêteté et la loyauté à cette liste. Je crois que ces valeurs sont essentielles pour construire une relation solide et durable. Et toi, quelles sont les qualités que tu apprécies chez un homme ?\n\nEnfin, je me demandais si tu avais déjà visité Bruxelles ? J'y ai vécu pendant un certain temps et je pense que c'est une ville magnifique avec beaucoup de choses à offrir. Si tu n'y es jamais allée, peut-être pourrions-nous y aller ensemble un jour ? Qu'en penses-tu ?",
@@ -37,10 +51,6 @@ class ChatGPTCustom :
 
           return res
 
-    [
-        "Certainement, je pense que vous êtes quelqu'un qui est à l'aise que ce soit pour passer une soirée tranquille à la maison, ou pour sortir et découvrir de nouvelles choses. Je me permets de supposer que vous n'êtes pas du genre à vous contenter de la routine habituelle ? Je serais vraiment ravi d'entendre votre point de vue sur ce qui, selon vous, contribue à la réussite d'une relation. Qu'est-ce qui, à votre avis, est le plus important pour maintenir une relation heureuse et saine ?",
-        "Pourrais-je suggérer, avec beaucoup de respect, que vous pourriez être quelqu'un qui est aussi à l'aise avec l'idée de passer une soirée tranquille à la maison que de sortir pour découvrir de nouvelles choses. Est-ce que je me trompe en pensant que vous n'êtes pas du genre à vous contenter de la routine habituelle ? Si vous me le permettez, j'aimerais beaucoup savoir ce qui, selon vous, fait qu'une relation est réussie. Pourriez-vous, si cela ne vous dérange pas, partager avec moi ce qui, à votre avis, est le plus important pour maintenir une relation heureuse et saine ?",
-        'Bien sûr, je serais ravi de vous aider à reformuler votre message de façon plus polie :\n\n"De surcroît, je me demandais si, comme moi, vous appréciez autant une soirée tranquille à la maison que la découverte de nouvelles expériences. J\'ai l\'impression, et veuillez me corriger si je me trompe, que vous n\'êtes pas du genre à vous satisfaire de la routine habituelle. Si cela ne vous dérange pas, j\'aimerais connaître votre avis sur ce qui fait, d\'après vous, qu\'une relation est réussie. Quels éléments considérez-vous comme essentiels pour maintenir une relation heureuse et saine ?"']
     def invoke_chatgpt(self,message_history):
         headers = {
             "Authorization": f"Bearer {API_KEY}",
